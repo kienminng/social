@@ -1,9 +1,14 @@
 package com.social.api.entity;
 
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -44,6 +49,12 @@ public class User implements UserDetails {
     private Role role;
     @Enumerated(EnumType.STRING)
     private Status status;
+    @CreationTimestamp
+    @Column(name = "create_at")
+    private LocalDateTime createAt;
+    @UpdateTimestamp
+    @Column(name = "update_at")
+    private LocalDateTime updateAt;
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
     @OneToMany
@@ -56,7 +67,9 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(getRole().name()));
+        if (getRole() != null) {
+            authorities.add(new SimpleGrantedAuthority(getRole().name()));
+        }
         return authorities;
     }
 

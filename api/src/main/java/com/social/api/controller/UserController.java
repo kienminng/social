@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
-@RequestMapping("api/v1/user/")
+@RequestMapping("api/v1/user")
 @CrossOrigin("*")
 public class UserController {
     @Autowired
@@ -28,4 +28,15 @@ public class UserController {
         var response = userService.searchUsers(request);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/info")
+    public ResponseEntity<UserInfoResponse> getInfo() {
+        return ResponseEntity.ok(userService.getCurrentUser());
+    }
+    
+    @GetMapping
+    public ResponseEntity<UserInfoResponse> findById(@RequestParam int id){
+        return ResponseEntity.ok(userService.findById(id));
+    }
+    
 }

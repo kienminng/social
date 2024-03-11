@@ -16,6 +16,6 @@ import lombok.Setter;
 public class PaginationUserRequest extends BasePaginationRequest{
     private String email;
     private String username;
-    private String Address;
+    private String address;
     private String phoneNumber;
 }

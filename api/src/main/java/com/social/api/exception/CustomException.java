@@ -2,10 +2,19 @@ package com.social.api.exception;
 
 import org.springframework.http.HttpStatus;
 
-public abstract class CustomException extends RuntimeException {
-    public CustomException(String message) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class CustomException extends RuntimeException {
+    private HttpStatus status;
+    public CustomException(String message, HttpStatus status) {
         super(message);
+        this.status = status;
     }
     
-    public abstract HttpStatus getHttpStatus();
+    
 }

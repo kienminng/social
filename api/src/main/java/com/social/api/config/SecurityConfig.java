@@ -1,15 +1,19 @@
 package com.social.api.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
@@ -35,39 +39,57 @@ public class SecurityConfig {
             "/webjars/**",
             "/swagger-ui.html",
             "api/v1/auth/**"
-         };
-    
-     private static final String[] ADMIN_LIST_URL ={"api/v1/user/**"};
-     private static final String[] USER_LIST_URL = {"api/v1/user/**"};      
+    };
 
+    private static final String[] ADMIN_LIST_URL = { "api/v1/user/getList" };
+    private static final String[] USER_LIST_URL = { "api/v1/user/info" };
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthFilter;
     @Autowired
     private AuthenticationProvider authenticationProvider;
-    // @Autowired
-    // private LogoutHandler logoutHandler;
+    @Autowired
+    private LogoutHandler logoutHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
-                    req -> req.requestMatchers(WHITE_LIST_URL)
-                        .permitAll()
-                        .requestMatchers(ADMIN_LIST_URL).hasRole(Role.Admin.name())
-                        .requestMatchers(USER_LIST_URL).hasRole(Role.User.name())
-                        .anyRequest()
-                        .authenticated()
-                        )
+                        req -> req.requestMatchers(WHITE_LIST_URL)
+                                .permitAll()
+                                // .requestMatchers(ADMIN_LIST_URL)
+                                // .hasRole(Role.Admin.name())
+                                .requestMatchers(USER_LIST_URL)
+                                .hasAnyAuthority(Role.Admin.name())
+                                .anyRequest()
+                                .authenticated()
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-                // .logout(logout -> logout.logoutUrl("/api/v1/auth/logout")
-                //         .addLogoutHandler(logoutHandler)
-                //         .logoutSuccessHandler(
-                //                 (request, response, authentication) -> SecurityContextHolder.clearContext()));
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .logout(logout -> logout.logoutUrl("/api/v1/auth/logout")
+                        .addLogoutHandler(logoutHandler)
+                        .logoutSuccessHandler(
+                                (request, response, authentication) -> SecurityContextHolder.clearContext()
+                        )
+                )
+                .exceptionHandling(handling -> handling
+                        .accessDeniedHandler(accessDeniedHandler())
+                        .authenticationEntryPoint(authenticationEntryPoint())
+                )
+                ;
 
         return http.build();
+    }
+
+     @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return new CustomAccessDeniedHandler();
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return new CustomAuthenticationEntryPoint();
     }
 }

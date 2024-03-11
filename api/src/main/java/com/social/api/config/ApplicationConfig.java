@@ -8,12 +8,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.social.api.exception.ResourceNotFoundException;
-import com.social.api.repository.IUserRepository;
+import com.social.api.service.impl.MyDetailService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class ApplicationConfig {
 
     @Autowired
-    private IUserRepository userRepository;
+    private MyDetailService detailService;
 
     @Bean
     public ModelMapper ModelMapper() {
@@ -30,15 +28,9 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-        return username -> userRepository.loadByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Username " + username + " not found"));
-    }
-
-    @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService());
+        authProvider.setUserDetailsService(detailService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }

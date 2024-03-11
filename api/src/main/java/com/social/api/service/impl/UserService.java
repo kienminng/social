@@ -1,6 +1,5 @@
 package com.social.api.service.impl;
 
-import java.net.http.HttpHeaders;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,6 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -49,15 +53,29 @@ public class UserService implements IUserService {
     private IJwtService jwtService;
     @Autowired
     private ITokenRepository tokenRepository;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
 
     @Override
     public TokenResponse login(LoginRequest request) {
-        String hashPassword = passwordEncoder.encode(request.getPassword());
-        User user = userRepository.findByUsernameAndPassword(request.getUsernameOrEmail(), hashPassword).orElseThrow(
-                () -> new ResourceNotFoundException("User name and passowrd not found"));
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsernameOrEmail(),
+                        request.getPassword()
+                        )
+                    );
+
+        User user = userRepository.loadByUsername(request.getUsernameOrEmail())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Invalid username/email or password")
+                        );
 
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.GenerateRefreshToken(user);
+
+        revokeAllUserTokens(user);
+        saveUserToken(user, accessToken);
 
         TokenResponse token = new TokenResponse().builder()
                 .accessToken(accessToken)
@@ -110,7 +128,6 @@ public class UserService implements IUserService {
         } catch (Exception e) {
             throw new Exception(e);
         }
-
     }
 
     @Override
@@ -141,6 +158,16 @@ public class UserService implements IUserService {
         userRepository.save(user);
     }
 
+    public UserInfoResponse getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        var username = userDetails.getUsername();
+        var user = userRepository.loadByUsername(username).orElseThrow( () -> new ResourceNotFoundException("Not found"));
+        var response = convertToUserInfoDTO(user);
+        return response;
+    }
+
+    @Override
     public void refreshToken(
             HttpServletRequest request,
             HttpServletResponse response)

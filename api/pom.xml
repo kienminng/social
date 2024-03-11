@@ -93,7 +93,6 @@
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-config</artifactId>
 			<version>5.5.1</version>
-			<!-- Thay đổi phiên bản tùy thuộc vào phiên bản Spring Security bạn đang sử dụng -->
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.security</groupId>
@@ -106,6 +105,10 @@
 			<artifactId>spring-security-config</artifactId>
 			<version>6.2.1</version>
 		</dependency>
+		<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
 	</dependencies>
 	<build>
 		<plugins>

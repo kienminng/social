@@ -23,6 +23,7 @@ public interface IUserService {
     void register(RegisterRequest registerRequest, Role role) throws Exception;
 
     UserInfoResponse findById(int id);
+    UserInfoResponse getCurrentUser();
 
     void delete(int id);
 

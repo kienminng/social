@@ -19,7 +19,7 @@ public interface IUserRepository extends JpaRepository<User,Integer>{
     @Query(value = "SELECT * FROM user u WHERE u.address LIKE %:address% AND u.user_name LIKE %:username% AND u.phone_number LIKE %:phone% AND u.email LIKE %:email%", nativeQuery = true)
     Slice<User> filter(@Param("username")String username,@Param("phone") String phone,@Param("address") String address,@Param("email")String email, Pageable pageable);
         
-    @Query(value = "SELECT * FROM user u WHERE u.user_name = :username", nativeQuery = true)
+    @Query(value = "SELECT u.* FROM user u WHERE u.user_name = :username", nativeQuery = true)
     Optional<User> loadByUsername(@Param("username") String username);
         
     @Query(value = "SELECT * FROM user u WHERE u.user_name = :username AND u.hash_password = :password", nativeQuery = true)
